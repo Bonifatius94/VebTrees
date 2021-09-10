@@ -10,15 +10,20 @@ namespace VebTrees
 
         public static void Main(string[] args)
         {
+            // define the universe size to be tested
+            const byte universeBits = 24;
+            const ulong universeSize = (ulong)1 << universeBits;
+
             Console.Write("Initializing the queue ... ");
 
             // create lots of items to be inserted / deleted
-            var itemsToInsert = Enumerable.Range(0, 30000)
-                .Select(x => (ulong)(rng.Next() % (1 << 16)))
+            const ulong queueItemsCount = universeSize / 16;
+            var itemsToInsert = Enumerable.Range(0, (int)queueItemsCount)
+                .Select(x => ((ulong)rng.Next() % universeSize))
                 .Distinct().ToHashSet();
 
             // initialize the tree
-            var queue = new VebTreeNode(24);
+            var queue = new VebTreeNode(universeBits);
 
             Console.WriteLine("Done!");
             Console.Write("Inserting items into the queue ... ");
@@ -58,14 +63,14 @@ namespace VebTrees
             // delete all items from the queue
             foreach (var item in itemsToInsert) { queue.Delete(item); }
 
+            Console.WriteLine("Done!");
+
             // ensure that all items were actually deleted
             // note: calling member() on an empty queue is really slow
             foreach (var item in itemsToInsert) {
                 if (queue.Member(item)) { throw new Exception(
                     "There are not properly deleted items!"); }
             }
-
-            Console.WriteLine("Done!");
         }
     }
 }
