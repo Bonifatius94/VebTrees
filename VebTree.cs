@@ -101,9 +101,11 @@ namespace VebTrees
         private VebTreeNode[] local;
 
         public bool IsEmpty() => low == null;
-        public bool Member(ulong nodeId) => Successor(nodeId - 1) == nodeId;
         public ulong? GetMin() => low;
         public ulong? GetMax() => high;
+
+        public bool Member(ulong id) => low != null && high != null 
+                                        && id >= low && id <= high && Successor(id - 1) == id;
 
         public ulong? Successor(ulong id)
         {
