@@ -18,6 +18,11 @@ proposed by Peter van Emde Boas, supporting following operations:
 
 Note: the predecessor operation is not implemented yet.
 
+As you can see, the special thing about van Emde Boas trees is that they scale with the
+universe size (upper bound of the largest number to possibly insert), rather than with
+the number of items inserted. Moreover O(log log u) makes those operations almost as
+efficient as constant time (e.g. log_2(log_2(2^64)) = log_2(64) = 6).
+
 ## Usage
 If you haven't done already, install dotnet to your dev machine.
 Following commands show how to install dotnet onto Ubuntu 20.04.
