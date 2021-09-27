@@ -94,8 +94,8 @@ namespace VebTrees
             // assign universe bits
             this.universeBits = universeBits;
 
-            // initialize children nodes (local) and existance bit-vector (global)
-            global = new bool[m];
+            // initialize children nodes (local / global)
+            if (universeBits > 1) { global = new VebTreeNode(upperBits); }
             local = new VebTreeNode[m];
 
             // init the children nodes on startup (no allocation in base case)
@@ -117,7 +117,7 @@ namespace VebTrees
         // tree node content
         private ulong? low;
         private ulong? high;
-        private bool[] global;
+        private VebTreeNode global;
         private VebTreeNode[] local;
 
         public bool IsEmpty() => low == null;
@@ -145,13 +145,10 @@ namespace VebTrees
                 return (upperAddress(id) << lowerBits) | (localChild.Successor(lowerAddress(id)));
             }
 
-            // subcase 2: id's successor is in a successing child node
-            for (ulong i = upperAddress(id) + 1; i < m; i++) {
-                if (global[i]) { return ((i << lowerBits) | local[i].GetMin()); }
-            }
-
-            // subcase 3: if nothing was found until now
-            return null;
+            // subcase 2: id's successor is in a successing child node,
+            //            defaulting to null if there's no successor
+            ulong? succ = global.Successor(upperAddress(id));
+            return succ != null ? ((succ.Value << lowerBits) | local[succ.Value].GetMin()) : null;
         }
 
         public ulong? Predecessor(ulong id)
@@ -177,7 +174,7 @@ namespace VebTrees
                 ulong lower = lowerAddress(id);
 
                 // mark sure to update global when inserting into an empty child node
-                if (local[upper].IsEmpty()) { global[upper] = true; }
+                if (local[upper].IsEmpty()) { global.Insert(upper); }
 
                 // insert the node into the child node
                 // takes O(1) when inserting into an empty child node
@@ -199,10 +196,12 @@ namespace VebTrees
             // case when deleting the minimum
             if (id == low) {
 
+                if (global.low == null) { throw new InvalidOperationException(
+                    "global.low is null, this should never happen..."); }
+
                 // find the new minimum in the children nodes
                 // -> delete the new minimum from the child node
-                ulong i = ulong.MaxValue;
-                while (!global[++i]) { /* nothing to do here ... */ }
+                ulong i = global.low.Value;
                 ulong newMin = (i << lowerBits) | (ulong)local[i].GetMin();
                 low = id = newMin;
             }
@@ -215,18 +214,15 @@ namespace VebTrees
             if (local[upper].IsEmpty()) {
 
                 // mark the empty child node as unused
-                global[upper] = false;
+                global.Delete(upper);
 
                 // in case the maximum was deleted
                 if (id == high) {
 
-                    // find the new maximum in the children nodes
-                    long i = (long)m;
-                    while (--i >= 0 && !global[i]) { /* nothing to do here ... */ }
-
-                    // in case nothing was found -> structure with 1 element left
-                    if (i < 0) { high = low; }
-                    else { high = ((ulong)i << lowerBits) | (local[i].GetMax()); }
+                    // find the new maximum in the children nodes, defaulting to low
+                    // if low is the only element left in this data structure
+                    ulong? l = global.high;
+                    high = (l != null) ? ((ulong)l << lowerBits) | local[l.Value].GetMax() : low;
                 }
             }
             // if the maximum was deleted, but there is another element in the child node
