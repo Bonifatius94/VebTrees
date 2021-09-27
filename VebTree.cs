@@ -25,7 +25,7 @@ namespace VebTrees
     /// <summary>
     /// An interface representing a van-Emde-Boas tree (priority queue).
     /// </summary>
-    public interface IVebTree
+    public interface IPriorityQueue
     {
         /// <summary>
         /// Checks if the the priority queue is empty.
@@ -82,8 +82,157 @@ namespace VebTrees
     /// <summary>
     /// An implementation of the van-Emde-Boas tree data structure that can be used
     /// as a priority queue supporting all operations with at most O(log log u) time.
+    /// It's a bit more memory efficient than the regular one only allocating max. memory
+    /// of O(u) instead of O(u log u) bits.
     /// </summary>
-    public class VebTree : IVebTree
+    public class MemEffVebTree : IPriorityQueue
+    {
+        // info: this class is wrapping up the van-Emde-Boas tree to make its max. memory
+        //       requirement more efficient. It's meant to be used by vEB library users.
+
+        /// <summary>
+        /// Create a new instance of a van-Emda-Boas tree with the given universe size.
+        /// </summary>
+        /// <param name="universeBits">The universe size as bits.</param>
+        public MemEffVebTree(byte universeBits)
+        {
+            this.universeBits = universeBits;
+            global = new VebTree(upperBits);
+            local = new BinaryHeap[lowerBits];
+        }
+
+        private VebTree global;
+        private BinaryHeap[] local;
+        private ulong? low = null;
+        private ulong? high = null;
+
+        private readonly byte universeBits;
+        private ulong m => (ulong)1 << upperBits;
+        private byte upperBits => (byte)(universeBits - lowerBits);
+        private byte lowerBits => (byte)(universeBits / 2);
+
+        public bool IsEmpty() => low == null;
+        public ulong? GetMin() => low;
+        public ulong? GetMax() => high;
+        public bool Member(ulong id)
+            => !global.IsEmpty() && local[upperAddress(id)].Member(lowerAddress(id));
+        public ulong? Successor(ulong id) => global.IsEmpty()
+            ? null : local[upperAddress(id)].Successor(lowerAddress(id));
+        public ulong? Predecessor(ulong id) => global.IsEmpty()
+            ? null : local[upperAddress(id)].Predecessor(lowerAddress(id));
+
+        public void Insert(ulong id)
+        {
+            // make sure the id is not already inserted
+            if (Member(id)) { return; }
+
+            ulong upper = upperAddress(id);
+            ulong lower = lowerAddress(id);
+
+            // insert the id into global and local
+            global.Insert(upper);
+            local[upper] = local[upper] ?? new BinaryHeap(lowerBits);
+            local[upper].Insert(lower);
+
+            // update low / high pointers
+            if (low == null) { low = high = id; return; }
+            low = low != null ? Math.Min(low.Value, id) : id;
+            high = high != null ? Math.Max(high.Value, id) : id;
+        }
+
+        public void Delete(ulong id)
+        {
+            // make sure the id is already inserted
+            if (!Member(id)) { return; }
+
+            ulong upper = upperAddress(id);
+            ulong lower = lowerAddress(id);
+
+            // delete the id from global and local
+            global.Delete(upper);
+            local[upper].Delete(lower);
+
+            // update low / high pointers
+            if (low == high) { low = high = null; return; }
+            if (id == low)
+            {
+                ulong minUpper = global.GetMax().Value;
+                low = (minUpper << upperBits) | local[minUpper].GetMin();
+            }
+            else if (id == high)
+            {
+                ulong maxUpper = global.GetMax().Value;
+                low = (maxUpper << upperBits) | local[maxUpper].GetMax();
+            }
+
+            // unallocate binary heap if not in use
+            local[upper] = local[upper].IsEmpty() ? null : local[upper];
+        }
+
+        // helper functions for mapping node ids to the corresponding global / local address parts
+        private ulong upperAddress(ulong id) => id >> lowerBits;
+        private ulong lowerAddress(ulong id) => (((ulong)1 << lowerBits) - 1) & id;
+    }
+
+    /// <summary>
+    /// An implementation of a binary heap (unbalanced).
+    /// </summary>
+    internal class BinaryHeap : IPriorityQueue
+    {
+        public BinaryHeap(byte universeBits)
+        {
+            ulong size = 1ul << universeBits;
+            children = new bool[size];
+        }
+
+        private bool[] children;
+
+        public bool IsEmpty()
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Member(ulong id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ulong? GetMin()
+        {
+            throw new NotImplementedException();
+        }
+
+        public ulong? GetMax()
+        {
+            throw new NotImplementedException();
+        }
+
+        public ulong? Successor(ulong id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ulong? Predecessor(ulong id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Insert(ulong id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Delete(ulong id)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// An implementation of the van-Emde-Boas tree data structure that can be used
+    /// as a priority queue supporting all operations with at most O(log log u) time.
+    /// </summary>
+    public class VebTree : IPriorityQueue
     {
         // info: this class is wrapping up the van-Emde-Boas tree to catch invalid
         //       insertions / deletions. It's meant to be used by vEB library users.
@@ -110,7 +259,7 @@ namespace VebTrees
     /// An implementation of the van-Emde-Boas tree data structure that can be used
     /// as a priority queue supporting all operations with at most O(log log u) time.
     /// </summary>
-    internal class VebTreeNode : IVebTree
+    internal class VebTreeNode : IPriorityQueue
     {
         public VebTreeNode(byte universeBits)
         {
