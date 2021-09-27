@@ -23,57 +23,57 @@ using System;
 namespace VebTrees
 {
     /// <summary>
-    /// An interface representing a van-Emde-Boas tree.
+    /// An interface representing a van-Emde-Boas tree (priority queue).
     /// </summary>
     public interface IVebTree
     {
         /// <summary>
-        /// Checks if the the tree is empty.
+        /// Checks if the the priority queue is empty.
         /// </summary>
         /// <returns>a boolean</returns>
         bool IsEmpty();
 
         /// <summary>
-        /// Checks whether the given id is part of the tree.
+        /// Checks whether the given id is part of the priority queue.
         /// </summary>
         /// <param name="id">The id to be looked up.</param>
         /// <returns>a boolean</returns>
         bool Member(ulong id);
 
         /// <summary>
-        /// Gets the minimum of the tree.
+        /// Gets the minimum of the priority queue.
         /// </summary>
-        /// <returns>the minimum's id (or null if the tree is empty)</returns>
+        /// <returns>the minimum's id (or null if the priority queue is empty)</returns>
         ulong? GetMin();
 
         /// <summary>
-        /// Gets the minimum of the tree.
+        /// Gets the minimum of the priority queue.
         /// </summary>
-        /// <returns>the minimum's id (or null if the tree is empty)</returns>
+        /// <returns>the minimum's id (or null if the priority queue is empty)</returns>
         ulong? GetMax();
 
         /// <summary>
-        /// Get the given id's successor from the tree.
+        /// Get the given id's successor from the priority queue.
         /// </summary>
         /// <param name="id">The id whose successor is to be found.</param>
         /// <returns>the successor's id (or null if there is no successor)</returns>
         ulong? Successor(ulong id);
 
         /// <summary>
-        /// Get the given id's predecessor from the tree.
+        /// Get the given id's predecessor from the priority queue.
         /// </summary>
         /// <param name="id">The id whose predecessor is to be found.</param>
         /// <returns>the predecessor's id (or null if there is no predecessor)</returns>
         ulong? Predecessor(ulong id);
 
         /// <summary>
-        /// Insert the given id into the tree.
+        /// Insert the given id into the priority queue.
         /// </summary>
         /// <param name="id">The id to be inserted.</param>
         void Insert(ulong id);
 
         /// <summary>
-        /// Delete the given id from the tree.
+        /// Delete the given id from the priority queue.
         /// </summary>
         /// <param name="id">The id to be deleted.</param>
         void Delete(ulong id);
@@ -83,7 +83,26 @@ namespace VebTrees
     /// An implementation of the van-Emde-Boas tree data structure that can be used
     /// as a priority queue supporting all operations with at most O(log log u) time.
     /// </summary>
-    public class VebTreeNode : IVebTree
+    public class VebTree : IVebTree
+    {
+        private VebTreeNode root;
+        public VebTree(byte universeBits) { root = new VebTreeNode(universeBits); }
+
+        public bool IsEmpty() => root.IsEmpty();
+        public ulong? GetMin() => root.GetMin();
+        public ulong? GetMax() => root.GetMax();
+        public bool Member(ulong id) => root.Member(id);
+        public ulong? Successor(ulong id) => root.Successor(id);
+        public ulong? Predecessor(ulong id) => root.Predecessor(id);
+        public void Insert(ulong id) { if (!root.Member(id)) { root.Insert(id); } }
+        public void Delete(ulong id) { if (root.Member(id)) { root.Delete(id); } }
+    }
+
+    /// <summary>
+    /// An implementation of the van-Emde-Boas tree data structure that can be used
+    /// as a priority queue supporting all operations with at most O(log log u) time.
+    /// </summary>
+    internal class VebTreeNode : IVebTree
     {
         /// <summary>
         /// Create a new instance of a van-Emda-Boas tree with the given universe size.
