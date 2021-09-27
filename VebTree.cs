@@ -85,17 +85,25 @@ namespace VebTrees
     /// </summary>
     public class VebTree : IVebTree
     {
-        private VebTreeNode root;
+        // info: this class is wrapping up the van-Emde-Boas tree to catch invalid
+        //       insertions / deletions. It's meant to be used by vEB library users.
+
+        /// <summary>
+        /// Create a new instance of a van-Emda-Boas tree with the given universe size.
+        /// </summary>
+        /// <param name="universeBits">The universe size as bits.</param>
         public VebTree(byte universeBits) { root = new VebTreeNode(universeBits); }
+
+        private VebTreeNode root;
 
         public bool IsEmpty() => root.IsEmpty();
         public ulong? GetMin() => root.GetMin();
         public ulong? GetMax() => root.GetMax();
-        public bool Member(ulong id) => root.Member(id);
-        public ulong? Successor(ulong id) => root.Successor(id);
-        public ulong? Predecessor(ulong id) => root.Predecessor(id);
-        public void Insert(ulong id) { if (!root.Member(id)) { root.Insert(id); } }
-        public void Delete(ulong id) { if (root.Member(id)) { root.Delete(id); } }
+        public bool Member(ulong id) => !root.IsEmpty() && root.Member(id);
+        public ulong? Successor(ulong id) => root.IsEmpty() ? null : root.Successor(id);
+        public ulong? Predecessor(ulong id) => root.IsEmpty() ? null : root.Predecessor(id);
+        public void Insert(ulong id) { if (!Member(id)) { root.Insert(id); } }
+        public void Delete(ulong id) { if (Member(id)) { root.Delete(id); } }
     }
 
     /// <summary>
@@ -104,23 +112,14 @@ namespace VebTrees
     /// </summary>
     internal class VebTreeNode : IVebTree
     {
-        /// <summary>
-        /// Create a new instance of a van-Emda-Boas tree with the given universe size.
-        /// </summary>
-        /// <param name="universeBits">The universe size as bits.</param>
         public VebTreeNode(byte universeBits)
         {
             // assign universe bits
             this.universeBits = universeBits;
 
             // initialize children nodes (local / global)
-            if (universeBits > 1) { global = new VebTreeNode(upperBits); }
+            global = null;
             local = new VebTreeNode[m];
-
-            // init the children nodes on startup (no allocation in base case)
-            if (universeBits > 1) {
-                for (ulong i = 0; i < m; i++) { local[i] = new VebTreeNode(lowerBits); }
-            }
 
             // initialize routing attributes
             low = null; high = null;
@@ -143,8 +142,8 @@ namespace VebTrees
         public ulong? GetMin() => low;
         public ulong? GetMax() => high;
 
-        public bool Member(ulong id) => low != null && high != null 
-                                        && id >= low && id <= high && Successor(id - 1) == id;
+        public bool Member(ulong id)
+            => id >= low && id <= high && Successor(id - 1) == id;
 
         public ulong? Successor(ulong id)
         {
@@ -157,15 +156,20 @@ namespace VebTrees
 
             // case when the id needs to be looked up in a child node
 
+            ulong upper = upperAddress(id);
+            ulong lower = lowerAddress(id);
+            local[upper] = local[upper] ?? new VebTreeNode(lowerBits);
+
             // subcase 1: id's successor is in the same child as the id itself
-            var localChild = local[upperAddress(id)];
+            var localChild = local[upper];
             ulong? localMax = localChild?.GetMax();
-            if (localMax != null && lowerAddress(id) < localMax) {
-                return (upperAddress(id) << lowerBits) | (localChild.Successor(lowerAddress(id)));
+            if (localMax != null && lower < localMax) {
+                return (upper << lowerBits) | (localChild.Successor(lower));
             }
 
             // subcase 2: id's successor is in a successing child node,
             //            defaulting to null if there's no successor
+            global = global ?? new VebTreeNode(upperBits);
             ulong? succ = global.Successor(upperAddress(id));
             return succ != null ? ((succ.Value << lowerBits) | local[succ.Value].GetMin()) : null;
         }
@@ -191,9 +195,13 @@ namespace VebTrees
                 // cache lower / upper address parts
                 ulong upper = upperAddress(id);
                 ulong lower = lowerAddress(id);
+                local[upper] = local[upper] ?? new VebTreeNode(lowerBits);
 
                 // mark sure to update global when inserting into an empty child node
-                if (local[upper].IsEmpty()) { global.Insert(upper); }
+                if (local[upper].IsEmpty()) {
+                    global = global ?? new VebTreeNode(upperBits);
+                    global.Insert(upper);
+                }
 
                 // insert the node into the child node
                 // takes O(1) when inserting into an empty child node
@@ -207,7 +215,11 @@ namespace VebTrees
         public void Delete(ulong id)
         {
             // base case with only one element -> set low and high to null
-            if (low == high) { low = high = null; return; }
+            if (low == high) {
+                low = high = null;
+                global = new VebTreeNode(upperBits);
+                return;
+            }
 
             // base case with universe { 0, 1 } -> flip the bit
             if (universeBits == 1) { low = high = 1 - id; return; }
@@ -233,6 +245,7 @@ namespace VebTrees
             if (local[upper].IsEmpty()) {
 
                 // mark the empty child node as unused
+                local[upper] = null;
                 global.Delete(upper);
 
                 // in case the maximum was deleted
