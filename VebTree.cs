@@ -96,20 +96,21 @@ namespace VebTrees
         /// <param name="universeBits">The universe size as bits.</param>
         public MemEffVebTree(byte universeBits)
         {
-            this.universeBits = universeBits;
+            upperBits = (byte)(universeBits - lowerBits);
+            lowerBits = (byte)Math.Ceiling(Math.Log2(universeBits));
+
             global = new VebTree(upperBits);
-            local = new BinaryHeap[lowerBits];
+            local = new MemEffBinarySearchTree[lowerBits];
         }
 
         private VebTree global;
-        private BinaryHeap[] local;
+        private MemEffBinarySearchTree[] local;
         private ulong? low = null;
         private ulong? high = null;
 
-        private readonly byte universeBits;
+        private byte upperBits;
+        private byte lowerBits;
         private ulong m => (ulong)1 << upperBits;
-        private byte upperBits => (byte)(universeBits - lowerBits);
-        private byte lowerBits => (byte)(universeBits / 2);
 
         public bool IsEmpty() => low == null;
         public ulong? GetMin() => low;
@@ -131,7 +132,7 @@ namespace VebTrees
 
             // insert the id into global and local
             global.Insert(upper);
-            local[upper] = local[upper] ?? new BinaryHeap(lowerBits);
+            local[upper] = local[upper] ?? new MemEffBinarySearchTree(lowerBits);
             local[upper].Insert(lower);
 
             // update low / high pointers
@@ -156,7 +157,7 @@ namespace VebTrees
             if (low == high) { low = high = null; return; }
             if (id == low)
             {
-                ulong minUpper = global.GetMax().Value;
+                ulong minUpper = global.GetMin().Value;
                 low = (minUpper << upperBits) | local[minUpper].GetMin();
             }
             else if (id == high)
@@ -175,55 +176,119 @@ namespace VebTrees
     }
 
     /// <summary>
-    /// An implementation of a binary heap (unbalanced).
+    /// An implementation of a fully-allocated binary search tree using O(u) bits.
     /// </summary>
-    internal class BinaryHeap : IPriorityQueue
+    internal class MemEffBinarySearchTree : IPriorityQueue
     {
-        public BinaryHeap(byte universeBits)
+        // TODO: binary search tree can only store universe_size - 1 bits
+        //       -> think of ways to handle the edge case for storing the 0
+
+        public MemEffBinarySearchTree(byte universeBits)
         {
+            this.universeBits = universeBits;
             ulong size = 1ul << universeBits;
+            binTreeAdj = new bool[size];
             children = new bool[size];
         }
 
+        private readonly byte universeBits;
+        private ulong rootId => 1ul << universeBits;
+
+        private ulong? low = null;
+        private ulong? high = null;
+        private bool[] binTreeAdj;
         private bool[] children;
+        private int count = 0;
 
-        public bool IsEmpty()
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool Member(ulong id)
-        {
-            throw new NotImplementedException();
-        }
-
-        public ulong? GetMin()
-        {
-            throw new NotImplementedException();
-        }
-
-        public ulong? GetMax()
-        {
-            throw new NotImplementedException();
-        }
+        public bool IsEmpty() => count == 0;
+        public bool Member(ulong id) => children[id];
+        public ulong? GetMin() => low;
+        public ulong? GetMax() => high;
 
         public ulong? Successor(ulong id)
         {
+            // info: the binary search tree guarantees that the lefthand children
+            //       are all smaller and the righthand children are greater than
+            //       the node which is currently looked at
+
+            // walk the binary search tree from the root to the id's node and only
+            // take paths to the smallerst nodes that are greater than id
+            // TODO: finish implementation
             throw new NotImplementedException();
         }
 
         public ulong? Predecessor(ulong id)
         {
+            // implement analog to successor
+            // search greatest nodes that are smaller than id
+            // TODO: finish implementation
             throw new NotImplementedException();
         }
 
         public void Insert(ulong id)
         {
+            // make sure the id is not already inserted
+            if (Member(id)) { return; }
+
+            // set the bit for the child to be inserted
+            children[id] = true;
+
+            // update high / low pointers
+            low = low != null ? Math.Min(low.Value, id) : id;
+            high = high != null ? Math.Max(high.Value, id) : id;
+            count = Math.Min(count + 1, children.Length);
+
+            // traverse the binary search tree and set the whole adjacency
+            // of the path from root to the id's node to true, indicating
+            // there's at least one node inserted down there
+            // TODO: finish implementation
             throw new NotImplementedException();
         }
 
         public void Delete(ulong id)
         {
+            // make sure the id is already inserted
+            if (!Member(id)) { return; }
+
+            children[id] = false;
+            count = Math.Max(count - 1, 0);
+
+            if (low == high) { low = high = null; return; }
+            if (id == low) { low = getMinChild(rootId); }
+            else if (id == high) { high = getMaxChild(rootId); }
+
+            // traverse the binary search tree and reset the whole adjacency
+            // of the path from the root to the id's node, indicating
+            // there's no more node inserted down there (unless id has children)
+            if (getMinChild(id) == null && getMaxChild(id) == null)
+            {
+                // TODO: finish implementation
+                throw new NotImplementedException();
+            }
+        }
+
+        private ulong? getMinChild(ulong id)
+        {
+            // find the id's tree level
+            // -> amount of max. children-1 in right/left subtrees
+            int level = 0;
+            ulong temp = id+1;
+            while ((temp & 1ul) == 0) { level++; temp >>= 1; }
+            ulong stepSize = (1ul << level);
+
+            // go to the id and step into left subtrees until reaching
+            // the bottom or stop if there's no more node down there
+            // info: all nodes in righthand subtree are greater -> ignore them
+            // TODO: finish implementation
+            throw new NotImplementedException();
+        }
+
+        private ulong? getMaxChild(ulong id)
+        {
+            // implement this analog to getMinChild()
+            // search for max. node in righthand subtree
+
+            // TODO: finish implementation
             throw new NotImplementedException();
         }
     }
