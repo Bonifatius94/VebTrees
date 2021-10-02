@@ -89,7 +89,7 @@ namespace VebTrees
         //       insertions / deletions. It's meant to be used by vEB library users.
 
         /// <summary>
-        /// Create a new instance of a van-Emda-Boas tree with the given universe size.
+        /// Create a new instance of a van-Emde-Boas tree (prio queue) with the given universe size.
         /// </summary>
         /// <param name="universeBits">The universe size as bits.</param>
         public VebTree(byte universeBits) { root = new VebTreeNode(universeBits); }
