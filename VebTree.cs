@@ -402,8 +402,8 @@ namespace VebTrees
                 ? lowerSid : upperSid;
         }
 
-        private ulong getLeftChild(ulong id, int rank) => id - (ulong)rank;
-        private ulong getRightChild(ulong id, int rank) => id + (ulong)rank;
+        private ulong getLeftChild(ulong id, int rank) => id - (1ul << (rank - 1));
+        private ulong getRightChild(ulong id, int rank) => id + (1ul << (rank - 1));
     }
 
     /// <summary>
