@@ -186,33 +186,48 @@ namespace VebTrees
         public MemEffBinarySearchTree(byte universeBits)
         {
             this.universeBits = universeBits;
-            ulong size = 1ul << universeBits;
-            binTreeAdj = new bool[size];
-            children = new bool[size];
+            ulong size = 1ul << universeBits; // TODO: handle case for fully-allocated tree with 64 bit (1 << 64 == 0 != 2^64)
+            hasChildren = new bool[size];
+            exists = new bool[size];
         }
 
         private readonly byte universeBits;
-        private ulong rootId => 1ul << universeBits;
+        private ulong rootId => 1ul << (universeBits - 1);
 
         private ulong? low = null;
         private ulong? high = null;
-        private bool[] binTreeAdj;
-        private bool[] children;
-        private int count = 0;
+        private bool[] hasChildren;
+        private bool[] exists;
 
-        public bool IsEmpty() => count == 0;
-        public bool Member(ulong id) => children[id];
+        public bool IsEmpty() => !hasChildren[rootId];
+        public bool Member(ulong id) => exists[id];
         public ulong? GetMin() => low;
         public ulong? GetMax() => high;
 
         public ulong? Successor(ulong id)
         {
-            // info: the binary search tree guarantees that the lefthand children
-            //       are all smaller and the righthand children are greater than
-            //       the node which is currently looked at
+            // the binary search tree guarantees that the lefthand children
+            // are all smaller and the righthand children are greater than
+            // the node which is currently looked at
 
-            // walk the binary search tree from the root to the id's node and only
-            // take paths to the smallerst nodes that are greater than id
+            // case 1: node has righthand children
+            //         -> find min child of that subtree
+
+            // otherwise, node has only lefthand children that are all smaller by def.
+            // -> needs to explore other subtrees of the parent node(s)
+
+            // case 2: the parent has lefthand children that are smaller
+            //         -> get min from parent's lefthand subtree
+
+            // case 3: the parent exists and has no lefthand children
+            //         -> parent is successor
+
+            // case 4: the parent does not exist, has only righthand children
+            //         -> get min from parent's righthand subtree
+
+            // case 5: parent has no other children and does not exist itself
+            //         -> repeat case 2 for parent's parent, terminate if parent is the root
+
             // TODO: finish implementation
             throw new NotImplementedException();
         }
@@ -221,76 +236,168 @@ namespace VebTrees
         {
             // implement analog to successor
             // search greatest nodes that are smaller than id
+
             // TODO: finish implementation
             throw new NotImplementedException();
         }
 
         public void Insert(ulong id)
         {
+            // TODO: handle the zero correctly (that's not inserted into the tree)
+
             // make sure the id is not already inserted
             if (Member(id)) { return; }
 
             // set the bit for the child to be inserted
-            children[id] = true;
+            exists[id] = true;
 
             // update high / low pointers
             low = low != null ? Math.Min(low.Value, id) : id;
             high = high != null ? Math.Max(high.Value, id) : id;
-            count = Math.Min(count + 1, children.Length);
 
             // traverse the binary search tree and set the whole adjacency
-            // of the path from root to the id's node to true, indicating
+            // of the path from root to the id's parent to true, indicating
             // there's at least one node inserted down there
-            // TODO: finish implementation
-            throw new NotImplementedException();
+            ulong tempId = rootId;
+            int rank = getNodeRank(rootId);
+            while (tempId != id)
+            {
+                hasChildren[tempId] = true;
+                tempId = tempId < id
+                    ? getRightChild(tempId, rank)
+                    : getLeftChild(tempId, rank);
+            }
         }
 
         public void Delete(ulong id)
         {
+            // TODO: handle the zero correctly (that's not inserted into the tree)
+
             // make sure the id is already inserted
             if (!Member(id)) { return; }
 
-            children[id] = false;
-            count = Math.Max(count - 1, 0);
+            // delete the id's node from the tree
+            exists[id] = false;
 
+            // update high / low pointers
             if (low == high) { low = high = null; return; }
-            if (id == low) { low = getMinChild(rootId); }
-            else if (id == high) { high = getMaxChild(rootId); }
+            if (id == low) { low = getMinChild(rootId, getNodeRank(rootId)); }
+            else if (id == high) { high = getMaxChild(rootId, getNodeRank(rootId)); }
 
-            // traverse the binary search tree and reset the whole adjacency
-            // of the path from the root to the id's node, indicating
-            // there's no more node inserted down there (unless id has children)
-            if (getMinChild(id) == null && getMaxChild(id) == null)
+            // check if node has children
+            // -> children adjacency remains unchanged
+            if (hasChildren[id]) { return; }
+
+            // update the children adjacency for all parents until
+            // a parent has other children as well or it's the root
+            int rank = getNodeRank(id);
+            ulong parentId = id;
+            while (parentId != rootId)
             {
-                // TODO: finish implementation
-                throw new NotImplementedException();
+                ulong siblingId = getSibling(parentId, rank);
+                parentId = getParent(parentId, rank++);
+                if (hasChildren[siblingId] || exists[siblingId]) { break; }
+                hasChildren[parentId] = false;
             }
         }
 
-        private ulong? getMinChild(ulong id)
+        private ulong? getMinChild(ulong id, int rank)
         {
-            // find the id's tree level
-            // -> amount of max. children-1 in right/left subtrees
-            int level = 0;
-            ulong temp = id+1;
-            while ((temp & 1ul) == 0) { level++; temp >>= 1; }
-            ulong stepSize = (1ul << level);
+            ulong min = id;
 
-            // go to the id and step into left subtrees until reaching
-            // the bottom or stop if there's no more node down there
-            // info: all nodes in righthand subtree are greater -> ignore them
-            // TODO: finish implementation
-            throw new NotImplementedException();
+            // loop until there are no children to be explored
+            while (hasChildren[min])
+            {
+                // visit the child on the left side (if exists)
+                if (hasLeftChildren(min, rank)) { min = getLeftChild(min, rank--); }
+
+                // check if the visited node is the min. child -> terminate
+                else if (exists[min]) { break; }
+
+                // no lefthand children, parent and its other children are smaller
+                // -> explore righthand children (there have to be nodes)
+                else { min = getRightChild(min, rank--); }
+            }
+
+            // return the greatest child or null if there is none
+            return exists[min] ? min : null;
         }
 
-        private ulong? getMaxChild(ulong id)
+        private ulong? getMaxChild(ulong id, int rank)
         {
-            // implement this analog to getMinChild()
-            // search for max. node in righthand subtree
+            ulong max = id;
 
-            // TODO: finish implementation
-            throw new NotImplementedException();
+            // loop until there are no children to be explored
+            while (hasChildren[max])
+            {
+                // visit the child on the right side (if exists)
+                if (hasRightChildren(max, rank)) { max = getRightChild(max, rank--); }
+
+                // check if the visited node is the max. child -> terminate
+                else if (exists[max]) { break; }
+
+                // no righthand children, parent and its other children are greater
+                // -> explore lefthand children (there have to be nodes)
+                else { max = getLeftChild(max, rank--); }
+            }
+
+            // return the greatest child or null if there is none
+            return exists[max] ? max : null;
         }
+
+        private bool hasLeftChildren(ulong id, int rank)
+        {
+            if (rank == 0) { return false; }
+            ulong leftChild = this.getLeftChild(id, rank);
+            return hasChildren[leftChild] || exists[leftChild];
+        }
+
+        private bool hasRightChildren(ulong id, int rank)
+        {
+            if (rank == 0) { return false; }
+            ulong rightChild = this.getRightChild(id, rank);
+            return hasChildren[rightChild] || exists[rightChild];
+        }
+
+        private int getNodeRank(ulong id)
+        {
+            // this is based on a property of the binary tree nodes where ids
+            // consisting of 2^r (for max. r) are positioned at tree rank r,
+            // e.g. odd ids are positioned at the lowest rank with r=0, ids
+            // divisible by 2^1 are positioned at r=1, ... only root has max. rank
+            // -> rank = trailing zeros of id
+
+            // determine the training zeros of id
+            int rank = 0;
+            while ((id & 1) == 0) { rank++; id >>= 1; }
+            return rank;
+        }
+
+        private ulong getParent(ulong id, int rank)
+        {
+            // determine possible parents (+/- stepsize of rank)
+            ulong stepSize = 1ul << rank;
+            ulong lowerPid = id - stepSize;
+            ulong upperPid = id + stepSize;
+
+            // choose the parent with lower rank -> direct parent,
+            // i.e. the parent that's of exactly rank r+1
+            return ((lowerPid >> (rank + 1)) & 1) == 1 ? lowerPid : upperPid;
+        }
+
+        private ulong getSibling(ulong id, int rank)
+        {
+            // determine possible parents (+/- stepsize of rank)
+            ulong stepSize = 1ul << rank;
+            ulong lowerPid = id - stepSize * 2;
+            ulong upperPid = id + stepSize * 2;
+
+            // choose the poss. sibling with the same rank
+            return ((lowerPid >> (rank)) & 1) == 1 ? lowerPid : upperPid;
+        }
+
+        private ulong getLeftChild(ulong id, int rank) => id - (ulong)rank;
+        private ulong getRightChild(ulong id, int rank) => id + (ulong)rank;
     }
 
     /// <summary>
