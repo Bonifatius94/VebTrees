@@ -216,17 +216,22 @@ namespace VebTrees
             // otherwise, node has only lefthand children that are all smaller by def.
             // -> needs to explore other subtrees of the parent node(s)
 
-            // case 2: the parent has lefthand children that are smaller
-            //         -> get min from parent's lefthand subtree
+            // case 2: node is located at parent's righthand subtree
+            //         -> move to parent's parent (parent's lefthand subtree is
+            //            smaller, righthand was already explored)
 
-            // case 3: the parent exists and has no lefthand children
-            //         -> parent is successor
+            // otherwise, node is located at parent's lefthand subtree
 
-            // case 4: the parent does not exist, has only righthand children
+            // case 3: the parent exists -> parent is successor
+
+            // case 4: the parent does not exist, but has righthand children
             //         -> get min from parent's righthand subtree
 
-            // case 5: parent has no other children and does not exist itself
-            //         -> repeat case 2 for parent's parent, terminate if parent is the root
+            // otherwise, node's parent is fully explored
+            // -> explore parent's parent (repeat case 2)
+
+            // note: when exploring the parent's parent,
+            //       terminate after having explored the root
 
             // TODO: finish implementation
             throw new NotImplementedException();
@@ -389,11 +394,12 @@ namespace VebTrees
         {
             // determine possible parents (+/- stepsize of rank)
             ulong stepSize = 1ul << rank;
-            ulong lowerPid = id - stepSize * 2;
-            ulong upperPid = id + stepSize * 2;
+            ulong lowerSid = id - stepSize * 2;
+            ulong upperSid = id + stepSize * 2;
 
-            // choose the poss. sibling with the same rank
-            return ((lowerPid >> (rank)) & 1) == 1 ? lowerPid : upperPid;
+            // choose the poss. sibling (need to have the same parent)
+            return getParent(lowerSid, rank) == getParent(id, rank)
+                ? lowerSid : upperSid;
         }
 
         private ulong getLeftChild(ulong id, int rank) => id - (ulong)rank;
