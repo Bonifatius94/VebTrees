@@ -19,6 +19,7 @@ SOFTWARE.
 */
 
 using System;
+using System.Numerics;
 
 namespace VebTrees
 {
@@ -96,8 +97,8 @@ namespace VebTrees
         /// <param name="universeBits">The universe size as bits.</param>
         public MemEffVebTree(byte universeBits)
         {
+            lowerBits = (byte)Math.Floor(Math.Log2(universeBits));
             upperBits = (byte)(universeBits - lowerBits);
-            lowerBits = (byte)Math.Ceiling(Math.Log2(universeBits));
 
             global = new VebTree(upperBits);
             local = new MemEffBinarySearchTree[lowerBits];
@@ -372,10 +373,8 @@ namespace VebTrees
             // divisible by 2^1 are positioned at r=1, ... only root has max. rank
             // -> rank = trailing zeros of id
 
-            // determine the training zeros of id
-            int rank = 0;
-            while ((id & 1) == 0) { rank++; id >>= 1; }
-            return rank;
+            // determine the trailing zeros of id
+            return BitOperations.TrailingZeroCount(id);
         }
 
         private ulong getParent(ulong id, int rank)
