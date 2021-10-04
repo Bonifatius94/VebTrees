@@ -47,15 +47,11 @@ git clone https://github.com/Bonifatius94/VebTrees
 cd VebTrees
 ```
 
-Now you can run the demo script creating a priority queue, inserting items,
-making lookups, getting the successor (e.g. for sorting), deleting items, etc.
+Now you can run the benchmark tests using following command:
 
 ```sh
-# use a non-optimized binary, working on any system
-dotnet run
-
 # use an optimized binary (here: optimized for linux x64 systems)
-dotnet run --runtime linux-x64 --configuration Release
+dotnet test --runtime linux-x64 --configuration Release
 ```
 
 ## License
