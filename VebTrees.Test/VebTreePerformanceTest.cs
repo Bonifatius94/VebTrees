@@ -19,8 +19,9 @@ namespace VebTrees.Test
             BenchmarkRunner.Run<VebTreeInitPerformanceTest>();
             BenchmarkRunner.Run<VebTreeInsertPerformanceTest>();
             BenchmarkRunner.Run<VebTreeDeletePerformanceTest>();
+            BenchmarkRunner.Run<VebTreeInsertAndDeletePerformanceTest>();
             BenchmarkRunner.Run<VebTreeSortPerformanceTest>();
-            BenchmarkRunner.Run<VebTreeMixedOpsPerformanceTest>();
+            // BenchmarkRunner.Run<VebTreeMixedOpsPerformanceTest>();
         }
     }
 
@@ -76,20 +77,24 @@ namespace VebTrees.Test
             items = Enumerable.Range(0, (int)queueItemsCount)
                 .Select(x => ((ulong)rng.Next() % universeSize))
                 .Distinct().ToHashSet();
+        }
+
+        [IterationSetup]
+        public void PreTest()
+        {
             queue = new VebTree(universeBits);
         }
 
         [Benchmark]
         public void VebInsertTest()
         {
-            var queue = new VebTree(universeBits);
-            Assert.True(!queue.IsEmpty());
+            Assert.True(queue.IsEmpty());
             foreach (var item in items) { queue.Insert(item); }
             Assert.True(!queue.IsEmpty());
         }
 
-        [GlobalCleanup]
-        public void GlobalCleanup()
+        [IterationCleanup]
+        public void PostTest()
         {
             queue = null;
             GC.Collect();
@@ -120,6 +125,11 @@ namespace VebTrees.Test
             items = Enumerable.Range(0, (int)queueItemsCount)
                 .Select(x => ((ulong)rng.Next() % universeSize))
                 .Distinct().ToHashSet();
+        }
+
+        [IterationSetup]
+        public void PreTest()
+        {
             queue = new VebTree(universeBits);
             foreach (var item in items) { queue.Insert(item); }
         }
@@ -131,8 +141,58 @@ namespace VebTrees.Test
             Assert.True(queue.IsEmpty());
         }
 
-        [GlobalCleanup]
-        public void GlobalCleanup()
+        [IterationCleanup]
+        public void PostTest()
+        {
+            queue = null;
+            GC.Collect();
+        }
+    }
+
+    [SimpleJob(runtimeMoniker: RuntimeMoniker.Net50, runStrategy: RunStrategy.ColdStart, launchCount: 1, targetCount: 5)]
+    public class VebTreeInsertAndDeletePerformanceTest
+    {
+        // create a seeded random number generator (for test repeatability)
+        private static readonly Random rng = new Random(0);
+
+        // define the universe sizes to be tested
+        [Params(10, 15, 20)]
+        public byte universeBits;
+
+        // create lots of items to be inserted / deleted
+        private ulong universeSize;
+        private ulong queueItemsCount;
+        private HashSet<ulong> items;
+        private VebTree queue;
+
+        [GlobalSetup]
+        public void Setup()
+        {
+            universeSize = (ulong)1 << universeBits;
+            queueItemsCount = universeSize / 2;
+            items = Enumerable.Range(0, (int)queueItemsCount)
+                .Select(x => ((ulong)rng.Next() % universeSize))
+                .Distinct().ToHashSet();
+        }
+
+        [IterationSetup]
+        public void PreTest()
+        {
+            queue = new VebTree(universeBits);
+        }
+
+        [Benchmark]
+        public void VebInsertAndDeleteTest()
+        {
+            
+            Assert.True(queue.IsEmpty());
+            foreach (var item in items) { queue.Insert(item); }
+            foreach (var item in items) { queue.Delete(item); }
+            Assert.True(queue.IsEmpty());
+        }
+
+        [IterationCleanup]
+        public void PostTest()
         {
             queue = null;
             GC.Collect();
@@ -166,13 +226,17 @@ namespace VebTrees.Test
             items = Enumerable.Range(0, (int)queueItemsCount)
                 .Select(x => ((ulong)rng.Next() % universeSize))
                 .Distinct().ToHashSet();
-            queue = new VebTree(universeBits);
-            foreach (var item in items) { queue.Insert(item); }
+
+            VebSortTest();
+            QuicksortTest();
         }
 
         [Benchmark]
         public void VebSortTest()
         {
+            queue = new VebTree(universeBits);
+            foreach (var item in items) { queue.Insert(item); }
+
             vebSortedItems = new List<ulong>();
             ulong? tempMin = queue.GetMin();
 
@@ -186,11 +250,10 @@ namespace VebTrees.Test
             qsSortedItems = items.OrderBy(x => x).ToList();
         }
 
-        [GlobalCleanup]
-        public void GlobalCleanup()
+        [IterationCleanup]
+        public void PostTest()
         {
             Assert.True(Enumerable.SequenceEqual(vebSortedItems, qsSortedItems));
-
             queue = null;
             GC.Collect();
         }
