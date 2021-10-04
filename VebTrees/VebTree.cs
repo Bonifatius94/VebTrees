@@ -119,7 +119,7 @@ namespace VebTrees
 
             // initialize children nodes (local / global)
             global = null;
-            local = new VebTreeNode[m];
+            if (universeBits > 1) { local = new VebTreeNode[m]; }
 
             // initialize routing attributes
             low = null; high = null;
@@ -143,13 +143,15 @@ namespace VebTrees
         public ulong? GetMax() => high;
 
         public bool Member(ulong id)
-            => id >= low && id <= high && Successor(id - 1) == id;
+            => low != null && (id == low || id == high
+                || (id > low && id < high 
+                    && local[upperAddress(id)]?.Member(lowerAddress(id)) == true));
 
         public ulong? Successor(ulong id)
         {
             // base case for universe with { 0, 1 }
             // when looking up the 0, check if the 1 is present in the structure as well
-            if (universeBits == 1) { return (id == 0 && high.Value == 1) ? (ulong)1 : null; }
+            if (universeBits == 1) { return (id == 0 && high == 1) ? (ulong)1 : null; }
 
             // case when the predecessor is in the neighbour structure -> low is the successor
             if (low != null && id < low) { return low; }
@@ -158,7 +160,6 @@ namespace VebTrees
 
             ulong upper = upperAddress(id);
             ulong lower = lowerAddress(id);
-            local[upper] = local[upper] ?? new VebTreeNode(lowerBits);
 
             // subcase 1: id's successor is in the same child as the id itself
             var localChild = local[upper];
@@ -169,8 +170,7 @@ namespace VebTrees
 
             // subcase 2: id's successor is in a successing child node,
             //            defaulting to null if there's no successor
-            global = global ?? new VebTreeNode(upperBits);
-            ulong? succ = global.Successor(upperAddress(id));
+            ulong? succ = global?.Successor(upperAddress(id));
             return succ != null ? ((succ.Value << lowerBits) | local[succ.Value].GetMin()) : null;
         }
 
