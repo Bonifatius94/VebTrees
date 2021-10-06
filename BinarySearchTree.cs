@@ -59,9 +59,11 @@ namespace VebTrees
 
         public ulong? Successor(ulong id)
         {
-            int rank = getNodeRank(id);
+            // handle special case for the 0 that's not inserted into the binary tree
+            if (id == 0) { return getMinChild(rootId, getNodeRank(rootId)); }
 
             // node has righthand children -> find min child of that subtree
+            int rank = getNodeRank(id);
             if (hasRightChildren(id, rank)) { return getMinChild(getRightChild(id, rank), rank-1); }
 
             // make sure the node is not the root
@@ -118,10 +120,14 @@ namespace VebTrees
 
             // set the bit for the child to be inserted
             exists[id] = true;
+            
 
             // update high / low pointers
             low = low != null ? Math.Min(low.Value, id) : id;
             high = high != null ? Math.Max(high.Value, id) : id;
+
+            // handle special case for the 0 that's not inserted into the binary tree
+            if (id == 0) { return; }
 
             // traverse the binary search tree and set the whole adjacency
             // of the path from root to the id's parent to true, indicating
@@ -151,6 +157,9 @@ namespace VebTrees
             if (low == high) { low = high = null; return; }
             if (id == low) { low = getMinChild(rootId, getNodeRank(rootId)); }
             else if (id == high) { high = getMaxChild(rootId, getNodeRank(rootId)); }
+
+            // handle special case for the 0 that's not inserted into the binary tree
+            if (id == 0) { return; }
 
             // check if node has children
             // -> children adjacency remains unchanged
