@@ -59,12 +59,34 @@ namespace VebTrees
         public bool IsEmpty() => low == null;
         public ulong? GetMin() => low;
         public ulong? GetMax() => high;
+
         public bool Member(ulong id)
-            => !global.IsEmpty() && local[upperAddress(id)].Member(lowerAddress(id));
-        public ulong? Successor(ulong id) => global.IsEmpty()
-            ? null : local[upperAddress(id)].Successor(lowerAddress(id));
-        public ulong? Predecessor(ulong id) => global.IsEmpty()
-            ? null : local[upperAddress(id)].Predecessor(lowerAddress(id));
+            => !global.IsEmpty() && (id == low || id == high
+                || (id > low && id < high 
+                    && local[upperAddress(id)]?.Member(lowerAddress(id)) == true));
+
+        public ulong? Successor(ulong id)
+        {
+            // base case when the structure is empty
+            if (global.IsEmpty()) { return null; }
+
+            // case when the successor is within the same local
+            ulong upper = upperAddress(id);
+            ulong lower = lowerAddress(id);
+            ulong? localSucc = local[upper]?.Successor(lower);
+            if (localSucc != null) { return (upper << lowerBits) | localSucc; }
+
+            // case when the successor is within a succeeding local
+            var minUpper = global.Successor(upper);
+            if (minUpper == null) { return null; }
+            return (minUpper << lowerBits) | local[minUpper.Value].GetMin();
+        }
+
+        public ulong? Predecessor(ulong id)
+            => throw new NotImplementedException();
+
+        // public ulong? Predecessor(ulong id) => global.IsEmpty()
+        //     ? null : local[upperAddress(id)].Predecessor(lowerAddress(id));
 
         public void Insert(ulong id)
         {
@@ -94,24 +116,21 @@ namespace VebTrees
             ulong lower = lowerAddress(id);
 
             // delete the id from global and local
-            global.Delete(upper);
             local[upper].Delete(lower);
+            if (local[upper].IsEmpty()) { global.Delete(upper); local[upper] = null; }
 
             // update low / high pointers
             if (low == high) { low = high = null; return; }
             if (id == low)
             {
                 ulong minUpper = global.GetMin().Value;
-                low = (minUpper << upperBits) | local[minUpper].GetMin();
+                low = (minUpper << lowerBits) | local[minUpper].GetMin();
             }
             else if (id == high)
             {
                 ulong maxUpper = global.GetMax().Value;
-                low = (maxUpper << upperBits) | local[maxUpper].GetMax();
+                low = (maxUpper << lowerBits) | local[maxUpper].GetMax();
             }
-
-            // unallocate binary heap if not in use
-            local[upper] = local[upper].IsEmpty() ? null : local[upper];
         }
 
         // helper functions for mapping node ids to the corresponding global / local address parts
