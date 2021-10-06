@@ -23,7 +23,7 @@ namespace VebTrees
                 .Distinct().ToHashSet();
 
             // initialize the tree
-            var queue = new VebTree(universeBits);
+            var queue = VebTreeFactory.CreateTree(universeBits);
 
             Console.WriteLine("Done!");
             Console.Write("Inserting items into the queue ... ");
