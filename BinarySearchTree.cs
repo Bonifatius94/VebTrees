@@ -132,8 +132,8 @@ namespace VebTrees
             {
                 hasChildren[tempId] = true;
                 tempId = tempId < id
-                    ? getRightChild(tempId, rank)
-                    : getLeftChild(tempId, rank);
+                    ? getRightChild(tempId, rank--)
+                    : getLeftChild(tempId, rank--);
             }
         }
 
