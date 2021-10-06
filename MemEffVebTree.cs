@@ -44,7 +44,7 @@ namespace VebTrees
             upperBits = (byte)(universeBits - lowerBits);
 
             global = new VebTree(upperBits);
-            local = new BinarySearchTree[lowerBits];
+            local = new BinarySearchTree[m];
         }
 
         private VebTree global;
