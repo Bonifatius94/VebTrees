@@ -117,7 +117,6 @@ namespace VebTrees
 
             // subcase 2: id's successor is in a successing child node,
             //            defaulting to null if there's no successor
-            global = global ?? new VebTreeNode(upperBits);
             ulong? succ = global?.Successor(upperAddress(id));
             return succ != null ? ((succ.Value << lowerBits) | local[succ.Value].GetMin()) : null;
         }
@@ -163,11 +162,7 @@ namespace VebTrees
         public void Delete(ulong id)
         {
             // base case with only one element -> set low and high to null
-            if (low == high) {
-                low = high = null;
-                global = new VebTreeNode(upperBits);
-                return;
-            }
+            if (low == high) { low = high = null; return; }
 
             // base case with universe { 0, 1 } -> flip the bit
             if (universeBits == 1) { low = high = 1 - id; return; }
