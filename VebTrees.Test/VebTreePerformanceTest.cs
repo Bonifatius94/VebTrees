@@ -36,12 +36,12 @@ namespace VebTrees.Test
         [Params(1, 10, 15, 20, 25)]
         public byte universeBits;
 
-        private VebTree queue;
+        private IPriorityQueue queue;
 
         [Benchmark]
         public void VebInitTest()
         {
-            queue = new VebTree(universeBits);
+            queue = VebTreeFactory.CreateTree(universeBits);
             Assert.True(queue.IsEmpty());
         }
 
@@ -67,7 +67,7 @@ namespace VebTrees.Test
         private ulong universeSize;
         private ulong queueItemsCount;
         private HashSet<ulong> items;
-        private VebTree queue;
+        private IPriorityQueue queue;
 
         [GlobalSetup]
         public void Setup()
@@ -82,7 +82,7 @@ namespace VebTrees.Test
         [IterationSetup]
         public void PreTest()
         {
-            queue = new VebTree(universeBits);
+            queue = VebTreeFactory.CreateTree(universeBits);
         }
 
         [Benchmark]
@@ -115,7 +115,7 @@ namespace VebTrees.Test
         private ulong universeSize;
         private ulong queueItemsCount;
         private HashSet<ulong> items;
-        private VebTree queue;
+        private IPriorityQueue queue;
 
         [GlobalSetup]
         public void Setup()
@@ -130,7 +130,7 @@ namespace VebTrees.Test
         [IterationSetup]
         public void PreTest()
         {
-            queue = new VebTree(universeBits);
+            queue = VebTreeFactory.CreateTree(universeBits);
             foreach (var item in items) { queue.Insert(item); }
         }
 
@@ -163,7 +163,7 @@ namespace VebTrees.Test
         private ulong universeSize;
         private ulong queueItemsCount;
         private HashSet<ulong> items;
-        private VebTree queue;
+        private IPriorityQueue queue;
 
         [GlobalSetup]
         public void Setup()
@@ -178,7 +178,7 @@ namespace VebTrees.Test
         [IterationSetup]
         public void PreTest()
         {
-            queue = new VebTree(universeBits);
+            queue = VebTreeFactory.CreateTree(universeBits);
         }
 
         [Benchmark]
@@ -213,7 +213,7 @@ namespace VebTrees.Test
         private ulong universeSize;
         private ulong queueItemsCount;
         private HashSet<ulong> items;
-        private VebTree queue;
+        private IPriorityQueue queue;
 
         private List<ulong> vebSortedItems;
         private List<ulong> qsSortedItems;
@@ -227,6 +227,8 @@ namespace VebTrees.Test
                 .Select(x => ((ulong)rng.Next() % universeSize))
                 .Distinct().ToHashSet();
 
+            // make sure both data structures are present
+            // this is required for comparison in post-benchmark
             VebSortTest();
             QuicksortTest();
         }
@@ -234,7 +236,7 @@ namespace VebTrees.Test
         [Benchmark]
         public void VebSortTest()
         {
-            queue = new VebTree(universeBits);
+            queue = VebTreeFactory.CreateTree(universeBits);
             foreach (var item in items) { queue.Insert(item); }
 
             vebSortedItems = new List<ulong>();
@@ -273,7 +275,7 @@ namespace VebTrees.Test
         private ulong universeSize;
         private ulong queueItemsCount;
         private HashSet<ulong> items;
-        private VebTree queue;
+        private IPriorityQueue queue;
 
         [GlobalSetup]
         public void Setup()
@@ -283,7 +285,7 @@ namespace VebTrees.Test
             items = Enumerable.Range(0, (int)queueItemsCount)
                 .Select(x => ((ulong)rng.Next() % universeSize))
                 .Distinct().ToHashSet();
-            queue = new VebTree(universeBits);
+            queue = VebTreeFactory.CreateTree(universeBits);
             foreach (var item in items) { queue.Insert(item); }
         }
 

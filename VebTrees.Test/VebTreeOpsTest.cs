@@ -10,13 +10,13 @@ namespace VebTrees.Test
         [Fact]
         public void InitTest()
         {
-            var queue = new VebTree(1);
+            var queue = VebTreeFactory.CreateTree(1);
             Assert.True(queue.IsEmpty());
-            queue = new VebTree(15);
+            queue = VebTreeFactory.CreateTree(15);
             Assert.True(queue.IsEmpty());
-            queue = new VebTree(32);
+            queue = VebTreeFactory.CreateTree(32);
             Assert.True(queue.IsEmpty());
-            // queue = new VebTree(64); // TODO: support 2^64 sized universes
+            // queue = VebTreeFactory.CreateTree(64); // TODO: support 2^64 sized universes
             // Assert.True(queue.IsEmpty());
         }
 
@@ -29,7 +29,7 @@ namespace VebTrees.Test
             {
                 for (ulong i = 0; i < ((ulong)1 << u); i++)
                 {
-                    var queue = new VebTree(u);
+                    var queue = VebTreeFactory.CreateTree(u);
                     queue.Insert(i);
                     Assert.True(queue.Member(i));
                     queue.Delete(i);
@@ -45,7 +45,7 @@ namespace VebTrees.Test
             byte maxUniverseBits = 10;
             for (byte u = minUniverseBits; u < maxUniverseBits; u++)
             {
-                var queue = new VebTree(u);
+                var queue = VebTreeFactory.CreateTree(u);
                 for (ulong i = 0; i < ((ulong)1 << u); i++) { queue.Insert(i); }
                 for (ulong i = 0; i < ((ulong)1 << u); i++) { Assert.True(queue.Member(i)); }
                 for (ulong i = 0; i < ((ulong)1 << u); i++) { queue.Delete(i); }
@@ -57,7 +57,8 @@ namespace VebTrees.Test
         [Fact]
         public void GracefulDuplicateInsertsAndDeletesTest()
         {
-            var queue = new VebTree(10);
+            // TODO: do this test also for a universe size <= 64 (this tests only the common vEB tree)
+            var queue = VebTreeFactory.CreateTree(10);
             queue.Insert(10);
             queue.Insert(10);
             Assert.True(queue.Member(10) && !queue.IsEmpty());
@@ -71,14 +72,15 @@ namespace VebTrees.Test
         // {
             // TODO: check if the program acutally throws an exception
             //       -> if not, add code for throwing exceptions to make this test pass
-            // var queue = new VebTree(2);
+            // var queue = VebTreeFactory.CreateTree(2);
             // Assert.Throws<ArgumentException>(() => queue.Insert(4));
         // }
 
         [Fact]
         public void SuccessorTest()
         {
-            var queue = new VebTree(2);
+            // TODO: do this test also for a universe size > 64 (this tests only the bitwise tree leaf)
+            var queue = VebTreeFactory.CreateTree(2);
             Assert.True(queue.Successor(0) == null);
             queue.Insert(0);
             Assert.True(queue.Successor(0) == null);
