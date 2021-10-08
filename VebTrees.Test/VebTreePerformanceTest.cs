@@ -73,7 +73,7 @@ namespace VebTrees.Test
         public void Setup()
         {
             universeSize = (ulong)1 << universeBits;
-            queueItemsCount = universeSize / 16;
+            queueItemsCount = universeSize / 2;
             items = Enumerable.Range(0, (int)queueItemsCount)
                 .Select(x => ((ulong)rng.Next() % universeSize))
                 .Distinct().ToHashSet();
@@ -121,7 +121,7 @@ namespace VebTrees.Test
         public void Setup()
         {
             universeSize = (ulong)1 << universeBits;
-            queueItemsCount = universeSize / 16;
+            queueItemsCount = universeSize / 2;
             items = Enumerable.Range(0, (int)queueItemsCount)
                 .Select(x => ((ulong)rng.Next() % universeSize))
                 .Distinct().ToHashSet();
@@ -156,7 +156,7 @@ namespace VebTrees.Test
         private static readonly Random rng = new Random(0);
 
         // define the universe sizes to be tested
-        [Params(10, 15, 20)]
+        [Params(10, 15, 20, 25)]
         public byte universeBits;
 
         // create lots of items to be inserted / deleted
@@ -222,7 +222,7 @@ namespace VebTrees.Test
         public void Setup()
         {
             universeSize = (ulong)1 << universeBits;
-            queueItemsCount = universeSize / 16;
+            queueItemsCount = universeSize / 2;
             items = Enumerable.Range(0, (int)queueItemsCount)
                 .Select(x => ((ulong)rng.Next() % universeSize))
                 .Distinct().ToHashSet();
@@ -281,7 +281,7 @@ namespace VebTrees.Test
         public void Setup()
         {
             universeSize = (ulong)1 << universeBits;
-            queueItemsCount = universeSize / 16;
+            queueItemsCount = universeSize / 2;
             items = Enumerable.Range(0, (int)queueItemsCount)
                 .Select(x => ((ulong)rng.Next() % universeSize))
                 .Distinct().ToHashSet();
