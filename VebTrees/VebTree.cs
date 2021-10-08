@@ -14,76 +14,20 @@ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+OUT OF OR IN CONNECTION WITH THE SOFTWARE add a feature to OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
 using System;
+using System.Numerics;
 
 namespace VebTrees
 {
     /// <summary>
-    /// An interface representing a van-Emde-Boas tree (priority queue).
-    /// </summary>
-    public interface IVebTree
-    {
-        /// <summary>
-        /// Checks if the the priority queue is empty.
-        /// </summary>
-        /// <returns>a boolean</returns>
-        bool IsEmpty();
-
-        /// <summary>
-        /// Checks whether the given id is part of the priority queue.
-        /// </summary>
-        /// <param name="id">The id to be looked up.</param>
-        /// <returns>a boolean</returns>
-        bool Member(ulong id);
-
-        /// <summary>
-        /// Gets the minimum of the priority queue.
-        /// </summary>
-        /// <returns>the minimum's id (or null if the priority queue is empty)</returns>
-        ulong? GetMin();
-
-        /// <summary>
-        /// Gets the minimum of the priority queue.
-        /// </summary>
-        /// <returns>the minimum's id (or null if the priority queue is empty)</returns>
-        ulong? GetMax();
-
-        /// <summary>
-        /// Get the given id's successor from the priority queue.
-        /// </summary>
-        /// <param name="id">The id whose successor is to be found.</param>
-        /// <returns>the successor's id (or null if there is no successor)</returns>
-        ulong? Successor(ulong id);
-
-        /// <summary>
-        /// Get the given id's predecessor from the priority queue.
-        /// </summary>
-        /// <param name="id">The id whose predecessor is to be found.</param>
-        /// <returns>the predecessor's id (or null if there is no predecessor)</returns>
-        ulong? Predecessor(ulong id);
-
-        /// <summary>
-        /// Insert the given id into the priority queue.
-        /// </summary>
-        /// <param name="id">The id to be inserted.</param>
-        void Insert(ulong id);
-
-        /// <summary>
-        /// Delete the given id from the priority queue.
-        /// </summary>
-        /// <param name="id">The id to be deleted.</param>
-        void Delete(ulong id);
-    }
-
-    /// <summary>
     /// An implementation of the van-Emde-Boas tree data structure that can be used
     /// as a priority queue supporting all operations with at most O(log log u) time.
     /// </summary>
-    public class VebTree : IVebTree
+    public class VebTree : IPriorityQueue
     {
         // info: this class is wrapping up the van-Emde-Boas tree to catch invalid
         //       insertions / deletions. It's meant to be used by vEB library users.
@@ -93,6 +37,7 @@ namespace VebTrees
         /// </summary>
         /// <param name="universeBits">The universe size as bits.</param>
         public VebTree(byte universeBits) { root = new VebTreeNode(universeBits); }
+        // TODO: enable/disable lazy-loading by a setting
 
         private VebTreeNode root;
 
@@ -110,7 +55,7 @@ namespace VebTrees
     /// An implementation of the van-Emde-Boas tree data structure that can be used
     /// as a priority queue supporting all operations with at most O(log log u) time.
     /// </summary>
-    internal class VebTreeNode : IVebTree
+    internal class VebTreeNode : IPriorityQueue
     {
         public VebTreeNode(byte universeBits)
         {
@@ -119,7 +64,7 @@ namespace VebTrees
 
             // initialize children nodes (local / global)
             global = null;
-            if (universeBits > 1) { local = new VebTreeNode[m]; }
+            local = new IPriorityQueue[m];
 
             // initialize routing attributes
             low = null; high = null;
@@ -135,8 +80,8 @@ namespace VebTrees
         // tree node content
         private ulong? low;
         private ulong? high;
-        private VebTreeNode global;
-        private VebTreeNode[] local;
+        private IPriorityQueue global;
+        private IPriorityQueue[] local;
 
         public bool IsEmpty() => low == null;
         public ulong? GetMin() => low;
@@ -195,11 +140,11 @@ namespace VebTrees
                 // cache lower / upper address parts
                 ulong upper = upperAddress(id);
                 ulong lower = lowerAddress(id);
-                local[upper] = local[upper] ?? new VebTreeNode(lowerBits);
+                local[upper] = local[upper] ?? createNode(lowerBits);
 
                 // mark sure to update global when inserting into an empty child node
                 if (local[upper].IsEmpty()) {
-                    global = global ?? new VebTreeNode(upperBits);
+                    global = global ?? createNode(upperBits);
                     global.Insert(upper);
                 }
 
@@ -215,11 +160,7 @@ namespace VebTrees
         public void Delete(ulong id)
         {
             // base case with only one element -> set low and high to null
-            if (low == high) {
-                low = high = null;
-                global = new VebTreeNode(upperBits);
-                return;
-            }
+            if (low == high) { low = high = null; return; }
 
             // base case with universe { 0, 1 } -> flip the bit
             if (universeBits == 1) { low = high = 1 - id; return; }
@@ -227,12 +168,12 @@ namespace VebTrees
             // case when deleting the minimum
             if (id == low) {
 
-                if (global.low == null) { throw new InvalidOperationException(
+                if (global.GetMin() == null) { throw new InvalidOperationException(
                     "global.low is null, this should never happen..."); }
 
                 // find the new minimum in the children nodes
                 // -> delete the new minimum from the child node
-                ulong i = global.low.Value;
+                ulong i = global.GetMin().Value;
                 ulong newMin = (i << lowerBits) | (ulong)local[i].GetMin();
                 low = id = newMin;
             }
@@ -253,7 +194,7 @@ namespace VebTrees
 
                     // find the new maximum in the children nodes, defaulting to low
                     // if low is the only element left in this data structure
-                    ulong? l = global.high;
+                    ulong? l = global.GetMax();
                     high = (l != null) ? ((ulong)l << lowerBits) | local[l.Value].GetMax() : low;
                 }
             }
@@ -264,5 +205,67 @@ namespace VebTrees
         // helper functions for mapping node ids to the corresponding global / local address parts
         private ulong upperAddress(ulong id) => id >> lowerBits;
         private ulong lowerAddress(ulong id) => (((ulong)1 << lowerBits) - 1) & id;
+
+        private IPriorityQueue createNode(byte universeBits)
+        {
+            return universeBits <= 6
+                ? new BitwiseVebTreeLeaf(universeBits)
+                : new VebTreeNode(universeBits);
+        }
+    }
+
+    internal struct BitwiseVebTreeLeaf : IPriorityQueue
+    {
+        public BitwiseVebTreeLeaf(byte universeBits)
+        {
+            // make sure this struct only manages max. 64 items
+            // to fit everything into a single 64-bit integer
+            if (universeBits > 6) { throw new ArgumentException(
+                "Universe is too big, cannot be greater than 64!"); }
+
+            this.universeBits = universeBits;
+            bitboard = 0;
+        }
+
+        private byte universeBits;
+        private ulong bitboard;
+
+        public bool IsEmpty() => bitboard == 0;
+
+        public bool Member(ulong id) => (bitboard & (1ul << (byte)id)) > 0;
+
+        public ulong? GetMin() => IsEmpty() ? null
+            : (ulong)BitOperations.TrailingZeroCount(bitboard);
+
+        public ulong? GetMax() => IsEmpty() ? null
+            : (ulong)BitOperations.Log2(bitboard);
+
+        public ulong? Successor(ulong id)
+        {
+            // extract the minimal of all higher bits
+            ulong succBits = bitboard & (0xFFFFFFFFFFFFFFFFul << ((byte)id + 1));
+            ulong minSucc = (ulong)BitOperations.TrailingZeroCount(succBits);
+            return (minSucc == 0 || succBits == 0) ? null : minSucc;
+        }
+
+        public ulong? Predecessor(ulong id)
+        {
+            // extract the highest of all lower bits
+            ulong predBits = bitboard & ((1ul << (byte)id) - 1);
+            ulong maxPred = (ulong)BitOperations.Log2(predBits);
+            return (maxPred == 0 && (bitboard & 1) == 0) ? null : maxPred;
+        }
+
+        public void Insert(ulong id)
+        {
+            // make sure the bit of id gets set (or stays set)
+            bitboard |= 1ul << (byte)id;
+        }
+
+        public void Delete(ulong id)
+        {
+            // make sure the bit of id gets wiped (or stays wiped)
+            bitboard &= ~(1ul << (byte)id);
+        }
     }
 }
