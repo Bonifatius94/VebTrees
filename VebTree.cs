@@ -271,15 +271,20 @@ namespace VebTrees
         private IVebTree createNode(byte universeBits)
         {
             return universeBits <= 6
-                ? new BitwiseVebTreeNode(universeBits)
+                ? new BitwiseVebTreeLeaf(universeBits)
                 : new VebTreeNode(universeBits);
         }
     }
 
-    internal struct BitwiseVebTreeNode : IVebTree
+    internal struct BitwiseVebTreeLeaf : IVebTree
     {
-        public BitwiseVebTreeNode(byte universeBits)
+        public BitwiseVebTreeLeaf(byte universeBits)
         {
+            // make sure this struct only manages max. 64 items
+            // to fit everything into a single 64-bit integer
+            if (universeBits > 6) { throw new ArgumentException(
+                "Universe is too big, cannot be greater than 64!"); }
+
             this.universeBits = universeBits;
             bitboard = 0;
         }
@@ -299,24 +304,30 @@ namespace VebTrees
 
         public ulong? Successor(ulong id)
         {
-            ulong succ = (ulong)BitOperations.TrailingZeroCount(
-                bitboard & (0xFFFFFFFFFFFFFFFFul << ((byte)id + 1)));
-            return (succ == 0) ? null : succ;
+            // extract the minimal of all higher bits
+            ulong succBits = bitboard & (0xFFFFFFFFFFFFFFFFul << ((byte)id + 1));
+            ulong minSucc = (ulong)BitOperations.TrailingZeroCount(succBits);
+            return (minSucc == 0) ? null : minSucc;
         }
 
         public ulong? Predecessor(ulong id)
         {
-            throw new NotImplementedException();
+            // extract the highest of all lower bits
+            ulong predBits = bitboard & ((1ul << (byte)id) - 1);
+            ulong maxPred = (ulong)BitOperations.Log2(predBits);
+            return (maxPred == 0 && (bitboard & 1) == 0) ? null : maxPred;
         }
 
         public void Insert(ulong id)
         {
+            // make sure the bit of id gets set (or stays set)
             bitboard |= 1ul << (byte)id;
         }
 
         public void Delete(ulong id)
         {
-            bitboard &= ~(1ul << (byte)id) & ((1ul << universeBits) - 1);
+            // make sure the bit of id gets wiped (or stays wiped)
+            bitboard &= ~(1ul << (byte)id);
         }
     }
 }
