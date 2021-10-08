@@ -44,11 +44,11 @@ namespace VebTrees
             upperBits = (byte)(universeBits - lowerBits);
 
             global = new VebTree(upperBits);
-            local = new BinarySearchTree[m];
+            local = new IPriorityQueue[m];
         }
 
-        private VebTree global;
-        private BinarySearchTree[] local;
+        private IPriorityQueue global;
+        private IPriorityQueue[] local;
         private ulong? low = null;
         private ulong? high = null;
 
@@ -98,7 +98,7 @@ namespace VebTrees
 
             // insert the id into global and local
             global.Insert(upper);
-            local[upper] = local[upper] ?? new BinarySearchTree(lowerBits);
+            local[upper] = local[upper] ?? createNode(lowerBits);
             local[upper].Insert(lower);
 
             // update low / high pointers
@@ -131,6 +131,13 @@ namespace VebTrees
                 ulong maxUpper = global.GetMax().Value;
                 high = (maxUpper << lowerBits) | local[maxUpper].GetMax();
             }
+        }
+
+        private IPriorityQueue createNode(byte universeBits)
+        {
+            return universeBits <= 6
+                ? new BitwiseVebTreeLeaf(universeBits)
+                : new BinarySearchTree(universeBits);
         }
 
         // helper functions for mapping node ids to the corresponding global / local address parts
