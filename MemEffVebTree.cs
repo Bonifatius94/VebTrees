@@ -129,7 +129,7 @@ namespace VebTrees
             else if (id == high)
             {
                 ulong maxUpper = global.GetMax().Value;
-                low = (maxUpper << lowerBits) | local[maxUpper].GetMax();
+                high = (maxUpper << lowerBits) | local[maxUpper].GetMax();
             }
         }
 
