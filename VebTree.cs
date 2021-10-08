@@ -51,8 +51,6 @@ namespace VebTrees
         public void Delete(ulong id) { if (Member(id)) { root.Delete(id); } }
     }
 
-    // TODO: use a ulong bitboard for nodes with u <= 64 (saves 2 recursions and lots of bits)
-
     /// <summary>
     /// An implementation of the van-Emde-Boas tree data structure that can be used
     /// as a priority queue supporting all operations with at most O(log log u) time.
@@ -247,7 +245,7 @@ namespace VebTrees
             // extract the minimal of all higher bits
             ulong succBits = bitboard & (0xFFFFFFFFFFFFFFFFul << ((byte)id + 1));
             ulong minSucc = (ulong)BitOperations.TrailingZeroCount(succBits);
-            return (minSucc == 0) ? null : minSucc;
+            return (minSucc == 0 || succBits == 0) ? null : minSucc;
         }
 
         public ulong? Predecessor(ulong id)
