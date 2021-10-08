@@ -34,7 +34,9 @@ namespace VebTrees
         public static IPriorityQueue CreateTree(byte universeBits)
         {
             // TODO: think of improvements (e.g. using a fully-allocated tree for small universes)
-            return new MemEffVebTree(universeBits);
+            return (universeBits <= 6)
+                ? new BitwiseVebTreeLeaf(universeBits)
+                : new MemEffVebTree(universeBits);
         }
 
         // TODO: add tree node factory function as well
