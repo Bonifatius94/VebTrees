@@ -29,7 +29,7 @@ namespace VebTrees
     /// It's a bit more memory efficient than the regular one only allocating max. memory
     /// of O(u) instead of O(u log u) bits.
     /// </summary>
-    public class MemEffVebTree : IPriorityQueue
+    internal class MemEffVebTree : IPriorityQueue
     {
         // info: this class is wrapping up the van-Emde-Boas tree to make its max. memory
         //       requirement more efficient. It's meant to be used by vEB library users.

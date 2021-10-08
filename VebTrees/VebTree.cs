@@ -27,7 +27,7 @@ namespace VebTrees
     /// An implementation of the van-Emde-Boas tree data structure that can be used
     /// as a priority queue supporting all operations with at most O(log log u) time.
     /// </summary>
-    public class VebTree : IPriorityQueue
+    internal class VebTree : IPriorityQueue
     {
         // info: this class is wrapping up the van-Emde-Boas tree to catch invalid
         //       insertions / deletions. It's meant to be used by vEB library users.
