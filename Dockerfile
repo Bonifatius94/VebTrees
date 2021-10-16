@@ -12,6 +12,10 @@ RUN dotnet restore --runtime linux-x64
 # copy the source code
 COPY ./ ./
 
-# run build + test + package steps
-RUN dotnet publish -o /app/bin --configuration Release \
+# run build + test steps
+RUN dotnet test --configuration Release \
     --runtime linux-x64 --no-restore
+
+# run package step
+RUN dotnet publish -o /app/bin --configuration Release \
+    --runtime linux-x64 --no-restore --no-build
