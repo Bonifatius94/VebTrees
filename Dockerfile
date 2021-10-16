@@ -7,7 +7,7 @@ WORKDIR /app/src
 COPY ./VebTrees.sln ./
 COPY ./VebTrees/VebTrees.csproj ./VebTrees/
 COPY ./VebTrees.Test/VebTrees.Test.csproj ./VebTrees.Test/
-RUN dotnet restore --configuration Release --runtime linux-x64
+RUN dotnet restore --runtime linux-x64
 
 # copy the source code
 COPY ./ ./
