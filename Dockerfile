@@ -13,8 +13,8 @@ RUN dotnet restore --runtime linux-x64
 COPY ./ ./
 
 # run build + test steps
-RUN dotnet test --configuration Release \
-    --runtime linux-x64 --no-restore
+#RUN dotnet test --configuration Release \
+#    --runtime linux-x64 --no-restore
 
 # run package step
 RUN dotnet publish -o /app/bin --configuration Release \
