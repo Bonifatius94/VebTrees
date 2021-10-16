@@ -18,4 +18,4 @@ RUN dotnet test --configuration Release \
 
 # run package step
 RUN dotnet publish -o /app/bin --configuration Release \
-    --runtime linux-x64 --no-restore --no-build
+    --runtime linux-x64
