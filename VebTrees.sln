@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VebTrees", "VebTrees\VebTre
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VebTrees.Test", "VebTrees.Test\VebTrees.Test.csproj", "{B7BF9CB5-C5C5-4162-8325-3F7608B52DF7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VebTrees.Benchmark", "VebTrees.Benchmark\VebTrees.Benchmark.csproj", "{C85FF8AF-5E71-40D4-A680-AF7660D67B97}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,5 +46,17 @@ Global
 		{B7BF9CB5-C5C5-4162-8325-3F7608B52DF7}.Release|x64.Build.0 = Release|Any CPU
 		{B7BF9CB5-C5C5-4162-8325-3F7608B52DF7}.Release|x86.ActiveCfg = Release|Any CPU
 		{B7BF9CB5-C5C5-4162-8325-3F7608B52DF7}.Release|x86.Build.0 = Release|Any CPU
+		{C85FF8AF-5E71-40D4-A680-AF7660D67B97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C85FF8AF-5E71-40D4-A680-AF7660D67B97}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C85FF8AF-5E71-40D4-A680-AF7660D67B97}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C85FF8AF-5E71-40D4-A680-AF7660D67B97}.Debug|x64.Build.0 = Debug|Any CPU
+		{C85FF8AF-5E71-40D4-A680-AF7660D67B97}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C85FF8AF-5E71-40D4-A680-AF7660D67B97}.Debug|x86.Build.0 = Debug|Any CPU
+		{C85FF8AF-5E71-40D4-A680-AF7660D67B97}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C85FF8AF-5E71-40D4-A680-AF7660D67B97}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C85FF8AF-5E71-40D4-A680-AF7660D67B97}.Release|x64.ActiveCfg = Release|Any CPU
+		{C85FF8AF-5E71-40D4-A680-AF7660D67B97}.Release|x64.Build.0 = Release|Any CPU
+		{C85FF8AF-5E71-40D4-A680-AF7660D67B97}.Release|x86.ActiveCfg = Release|Any CPU
+		{C85FF8AF-5E71-40D4-A680-AF7660D67B97}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

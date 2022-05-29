@@ -5,14 +5,12 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Engines;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
-using Xunit;
 
-namespace VebTrees.Test
+namespace VebTrees.Benchmark
 {
-    public class VebTreePerformanceTestXunit
+    public class VebTreeBenchmark
     {
-        [Fact]
-        public void PerformanceTest()
+        public static void Main(string[] args)
         {
             // info: this is just a dummy to launch the benchmark
             //       without having to write a main function
@@ -33,7 +31,7 @@ namespace VebTrees.Test
 
         // define the universe sizes to be tested
         // [Params(1, 10, 15, 20, 25, 32, 42, 55, 64)]
-        [Params(1, 10, 15, 20, 25)]
+        [Params(1, 10, 15, 19/*, 25*/)]
         public byte universeBits;
 
         private IPriorityQueue queue;
@@ -42,7 +40,6 @@ namespace VebTrees.Test
         public void VebInitTest()
         {
             queue = VebTreeFactory.CreateTree(universeBits);
-            Assert.True(queue.IsEmpty());
         }
 
         [GlobalCleanup]
@@ -60,7 +57,7 @@ namespace VebTrees.Test
         private static readonly Random rng = new Random(0);
 
         // define the universe sizes to be tested
-        [Params(10, 15, 20, 25)]
+        [Params(10, 15, 19/*, 25*/)]
         public byte universeBits;
 
         // create lots of items to be inserted / deleted
@@ -88,9 +85,7 @@ namespace VebTrees.Test
         [Benchmark]
         public void VebInsertTest()
         {
-            Assert.True(queue.IsEmpty());
             foreach (var item in items) { queue.Insert(item); }
-            Assert.True(!queue.IsEmpty());
         }
 
         [IterationCleanup]
@@ -108,7 +103,7 @@ namespace VebTrees.Test
         private static readonly Random rng = new Random(0);
 
         // define the universe sizes to be tested
-        [Params(10, 15, 20, 25)]
+        [Params(10, 15, 19/*, 25*/)]
         public byte universeBits;
 
         // create lots of items to be inserted / deleted
@@ -138,7 +133,6 @@ namespace VebTrees.Test
         public void VebDeleteTest()
         {
             foreach (var item in items) { queue.Delete(item); }
-            Assert.True(queue.IsEmpty());
         }
 
         [IterationCleanup]
@@ -156,7 +150,7 @@ namespace VebTrees.Test
         private static readonly Random rng = new Random(0);
 
         // define the universe sizes to be tested
-        [Params(10, 15, 20, 25)]
+        [Params(10, 15, 19/*, 25*/)]
         public byte universeBits;
 
         // create lots of items to be inserted / deleted
@@ -185,10 +179,8 @@ namespace VebTrees.Test
         public void VebInsertAndDeleteTest()
         {
             
-            Assert.True(queue.IsEmpty());
             foreach (var item in items) { queue.Insert(item); }
             foreach (var item in items) { queue.Delete(item); }
-            Assert.True(queue.IsEmpty());
         }
 
         [IterationCleanup]
@@ -206,7 +198,7 @@ namespace VebTrees.Test
         private static readonly Random rng = new Random(0);
 
         // define the universe sizes to be tested
-        [Params(10, 15, 20, 25)]
+        [Params(10, 15, 19/*, 25*/)]
         public byte universeBits;
 
         // create lots of items to be inserted / deleted
@@ -255,7 +247,6 @@ namespace VebTrees.Test
         [IterationCleanup]
         public void PostTest()
         {
-            Assert.True(Enumerable.SequenceEqual(vebSortedItems, qsSortedItems));
             queue = null;
             GC.Collect();
         }
@@ -268,7 +259,7 @@ namespace VebTrees.Test
         private static readonly Random rng = new Random(0);
 
         // define the universe sizes to be tested
-        [Params(10, 15, 20, 25)]
+        [Params(10, 15, 19/*, 25*/)]
         public byte universeBits;
 
         // create lots of items to be inserted / deleted

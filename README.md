@@ -50,8 +50,11 @@ cd VebTrees
 Now you can run the benchmark tests using following command:
 
 ```sh
-# use an optimized binary (here: optimized for linux x64 systems)
+# run the unit tests
 dotnet test --runtime linux-x64 --configuration Release
+
+# run the benchmarks
+dotnet run --project VebTrees.Benchmark --configuration Release --runtime win-x64
 ```
 
 ## License
