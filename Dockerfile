@@ -17,6 +17,10 @@ COPY ./ ./
 RUN dotnet test --configuration Release \
     --runtime linux-x64 --no-restore
 
+# run the benchmarks
+RUN dotnet run --project VebTrees.Benchmark \
+    --configuration Release --runtime linux-x64 --no-restore
+
 # run package step
 RUN dotnet publish -o /app/bin --configuration Release \
     --runtime linux-x64
